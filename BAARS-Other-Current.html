@@ -63,9 +63,9 @@
       title: "BAARS-IV: Other Report: Current Symptoms",
       intro: "Please answer honestly. There are no right or wrong answers.",
       respondentFields: [
+        { id: "p_name", label: "Patient's Full Name", type: "text" },
         { id: "r_name", label: "Your Full Name", type: "text", required: true },
-        { id: "r_relationship", label: "Relationship to Patient", type: "text", required: true },
-        { id: "r_email", label: "Your Email (optional)", type: "email" }
+        { id: "r_relationship", label: "Relationship to Patient", type: "text", required: true }
       ],
       sections: [
         {
@@ -354,9 +354,9 @@
       lines.push(`# ${a.title}`);
       lines.push(`Submitted: ${a.timestamp}`);
       lines.push('');
+      lines.push(`Patient Name: ${a.meta.p_name}`);
       lines.push(`Respondent: ${a.meta.r_name || ''}`);
       lines.push(`Relationship: ${a.meta.r_relationship || ''}`);
-      if (a.meta.r_email) lines.push(`Email: ${a.meta.r_email}`);
       lines.push('');
 
       let pos = 0;
@@ -423,9 +423,9 @@
       doc.text(`Submitted: ${new Date(a.timestamp).toLocaleString()}`, margin, y); 
       y += 12;
       const meta = [
+        `Patient: ${ascii(a.meta.p_name || '')}`
         `Respondent: ${ascii(a.meta.r_name || '')}`,
         `Relationship: ${ascii(a.meta.r_relationship || '')}`,
-        a.meta.r_email ? `Email: ${ascii(a.meta.r_email)}` : null
       ].filter(Boolean);
       meta.forEach(line => { ensure(); doc.text(line, margin, y); y += 12; });
       y += 6;
