@@ -423,9 +423,9 @@
       doc.text(`Submitted: ${new Date(a.timestamp).toLocaleString()}`, margin, y); 
       y += 12;
       const meta = [
-        `Patient: ${ascii(a.meta.p_name || '')}`
+        `Patient: ${ascii(a.meta.p_name || '')}`,
         `Respondent: ${ascii(a.meta.r_name || '')}`,
-        `Relationship: ${ascii(a.meta.r_relationship || '')}`,
+        `Relationship: ${ascii(a.meta.r_relationship || '')}`
       ].filter(Boolean);
       meta.forEach(line => { ensure(); doc.text(line, margin, y); y += 12; });
       y += 6;
