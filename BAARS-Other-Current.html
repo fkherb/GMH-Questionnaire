@@ -89,7 +89,7 @@
             { id:"q11", text:"Leaves his/her seat in classrooms or in other situations in which remaining seated is expected.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q12", text:"Shifts around excessively or feels restless or hemmed in.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q13", text:"Has difficulty engaging in leisure activities quietly.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
-            { id:"q14", text:"Is 'on the go' or acts as if 'driven by a motor'.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
+            { id:"q14", text:"Is \"on the go\" or acts as if \"driven by a motor\".", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
           ]
         },
         {
@@ -108,7 +108,7 @@
             { id:"q20", text:"Has trouble staying alert or awake in boring situations.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q21", text:"Is easily confused.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q22", text:"Is easily bored.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
-            { id:"q23", text:"Is spacey or 'in a fog'.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q23", text:"Is spacey or \"in a fog\".", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q24", text:"Is lethargic, more tired than others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q25", text:"Is underactive or has less energy than others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
             { id:"q26", text:"Is slow moving.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
@@ -119,9 +119,9 @@
           title: "Section 5: Onset & Impairment",
           skipOfficeNote: true,  // << do not include in-office block for this section
           items: [
-            { id:"q28", text:"Did this person experience any of these 27 symptoms at least “Often” or more frequently (i.e., a 3 or 4 above)?", type:"yesno", options:["No","Yes"], required:true },
-            { id:"q29", text:"If yes, how old was the person when those symptoms began? (years old) — or check “I don’t know”.", type:"number_or_unknown", min:0, max:120, showIf:{ id:"q28", eq:"Yes" } },
-            { id:"q30", text:"If so, in which of these settings did those symptoms impair the person’s functioning? (check all that apply)", type:"multicheck", options:["School","Home","Work","Social Relationships"], showIf:{ id:"q28", eq:"Yes" } }
+            { id:"q28", text:"Did this person experience any of these 27 symptoms at least \"Often\" or more frequently (i.e., a 3 or 4 above)?", type:"yesno", options:["No","Yes"], required:true },
+            { id:"q29", text:"If yes, how old was the person when those symptoms began? (years old) - or check \"I don't know.\"", type:"number_or_unknown", min:0, max:120, showIf:{ id:"q28", eq:"Yes" } },
+            { id:"q30", text:"If so, in which of these settings did those symptoms impair the person's functioning? (check all that apply)", type:"multicheck", options:["School","Home","Work","Social Relationships"], showIf:{ id:"q28", eq:"Yes" } }
           ]
         }
       ]
