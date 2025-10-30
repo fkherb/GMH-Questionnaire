@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confidential Questionnaire</title>
+  <!-- Tailwind for quick styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jsPDF + FileSaver (no SRI, stable on GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <style>html{scroll-behavior:smooth}</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <main class="max-w-3xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold">Confidential Questionnaire</h1>
+      <p class="text-sm text-slate-600 mt-2">
+        Your answers are <strong>not sent anywhere</strong>. Everything happens in your browser.
+        When finished, download a file and send it directly to the recipient.
+      </p>
+      <div class="mt-3 text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800">
+        <p><strong>Privacy Note:</strong> This page stores nothing and has no analytics. Closing the page clears your answers.</p>
+      </div>
+    </header>
+
+    <!-- SETTINGS / RECIPIENT INFO (optional) -->
+    <section class="mb-6 grid gap-3 md:grid-cols-2">
+      <label class="block">
+        <span class="text-sm font-medium">Recipient name (optional)</span>
+        <input id="recipientName" type="text" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="e.g., Dr. Jones" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Recipient email (optional)</span>
+        <input id="recipientEmail" type="email" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="e.g., dr.jones@clinic.example" />
+      </label>
+    </section>
+
+    <!-- FORM RENDER TARGET -->
+    <form id="questionnaire" class="bg-white rounded-2xl shadow p-5 border border-slate-200"></form>
+
+    <!-- ACTIONS -->
+    <section class="mt-6 grid gap-3 md:grid-cols-2">
+      <button id="downloadPdf" type="button" class="rounded-xl bg-indigo-600 text-white px-4 py-3 font-semibold shadow hover:bg-indigo-700">Download PDF</button>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="downloadTxt" type="button" class="rounded-xl bg-slate-800 text-white px-4 py-3 font-semibold shadow hover:bg-slate-900">Download TXT</button>
+        <button id="downloadCsv" type="button" class="rounded-xl bg-slate-800 text-white px-4 py-3 font-semibold shadow hover:bg-slate-900">Download CSV</button>
+      </div>
+      <button id="composeEmail" type="button" class="rounded-xl bg-slate-200 text-slate-900 px-4 py-3 font-semibold shadow hover:bg-slate-300">Open Email to Recipient</button>
+      <button id="resetForm" type="button" class="rounded-xl bg-white border border-slate-300 px-4 py-3 font-semibold shadow hover:bg-slate-50">Clear All Answers</button>
+    </section>
+
+    <footer class="mt-8 text-xs text-slate-500">
+      <p>Tip: Customize the questionnaire by editing the <code>SCHEMA</code> below.</p>
+    </footer>
+  </main>
+
+  <script>
+    // ---------------------------
+    // 1) Define your questionnaire (with Section 5 + skipOfficeNote)
+    // ---------------------------
+    const SCHEMA = {
+      title: "BAARS-IV: Other Report: Current Symptoms",
+      intro: "Please answer honestly. There are no right or wrong answers.",
+      respondentFields: [
+        { id: "r_name", label: "Your Full Name", type: "text", required: true },
+        { id: "r_relationship", label: "Relationship to Patient", type: "text", required: true },
+        { id: "r_email", label: "Your Email (optional)", type: "email" }
+      ],
+      sections: [
+        {
+          title: "Section 1: Inattention",
+          items: [
+            { id:"q1",  text:"Fails to give close attention to details or makes careless mistakes in his/her work or other activities.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q2",  text:"Has difficulty sustaining his/her attention in tasks or fun activities.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q3",  text:"Doesn't listen when spoken to directly.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q4",  text:"Doesn't follow through on instructions and fails to finish work or chores.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q5",  text:"Has difficulty organizing tasks or activities.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q6",  text:"Avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q7",  text:"Loses things necessary for tasks or activities.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q8",  text:"Is easily distracted by extraneous stimuli or irrelevant thoughts.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q9",  text:"Is forgetful in daily activities.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
+          ]
+        },
+        {
+          title: "Section 2: Hyperactivity",
+          items: [
+            { id:"q10", text:"Fidgets with hands or feet or squirms in seat.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q11", text:"Leaves his/her seat in classrooms or in other situations in which remaining seated is expected.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q12", text:"Shifts around excessively or feels restless or hemmed in.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q13", text:"Has difficulty engaging in leisure activities quietly.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q14", text:"Is 'on the go' or acts as if 'driven by a motor'.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
+          ]
+        },
+        {
+          title: "Section 3: Impulsivity",
+          items: [
+            { id:"q15", text:"Talks excessively (in social situations).", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q16", text:"Blurts out answers before questions have been completed, completes others' sentences, or jumps the gun.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q17", text:"Has difficulty awaiting his/her turn.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q18", text:"Interrupts or intrudes on others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
+          ]
+        },
+        {
+          title: "Section 4: Sluggish Cognitive Tempo",
+          items: [
+            { id:"q19", text:"Is prone to daydreaming when he/she should be concentrating.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q20", text:"Has trouble staying alert or awake in boring situations.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q21", text:"Is easily confused.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q22", text:"Is easily bored.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q23", text:"Is spacey or 'in a fog'.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q24", text:"Is lethargic, more tired than others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q25", text:"Is underactive or has less energy than others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q26", text:"Is slow moving.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true },
+            { id:"q27", text:"Doesn't seem to process information as quickly or as accurately as others.", type:"likert", options:["Never/Rarely","Sometimes","Often","Very Often"], required:true }
+          ]
+        },
+        {
+          title: "Section 5: Onset & Impairment",
+          skipOfficeNote: true,  // << do not include in-office block for this section
+          items: [
+            { id:"q28", text:"Did this person experience any of these 27 symptoms at least “Often” or more frequently (i.e., a 3 or 4 above)?", type:"yesno", options:["No","Yes"], required:true },
+            { id:"q29", text:"If yes, how old was the person when those symptoms began? (years old) — or check “I don’t know”.", type:"number_or_unknown", min:0, max:120, showIf:{ id:"q28", eq:"Yes" } },
+            { id:"q30", text:"If so, in which of these settings did those symptoms impair the person’s functioning? (check all that apply)", type:"multicheck", options:["School","Home","Work","Social Relationships"], showIf:{ id:"q28", eq:"Yes" } }
+          ]
+        }
+      ]
+    };
+
+    // ---------------------------
+    // 2) Render form from SCHEMA
+    // ---------------------------
+    const formEl = document.getElementById('questionnaire');
+
+    function el(tag, attrs={}, children=[]) {
+      const e = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs)) {
+        if (k === 'class') e.className = v;
+        else if (k === 'for') e.htmlFor = v;
+        else e.setAttribute(k, v);
+      }
+      children.forEach(c => e.append(c));
+      return e;
+    }
+
+    function render() {
+      formEl.innerHTML = '';
+      const title = el('h2', { class: 'text-2xl font-bold mb-1' }, [SCHEMA.title]);
+      const intro = el('p', { class: 'text-sm text-slate-600 mb-4' }, [SCHEMA.intro]);
+
+      const respondentBox = el('div', { class: 'mb-6 grid md:grid-cols-3 gap-3' });
+      SCHEMA.respondentFields.forEach(f => {
+        const wrap = el('label', { class: 'block' });
+        wrap.append(el('span', { class: 'text-sm font-medium' }, [f.label]));
+        const input = f.type === 'textarea'
+          ? el('textarea', { id: f.id, class: 'mt-1 w-full rounded-lg border border-slate-300 p-2', required: !!f.required })
+          : el('input', { id: f.id, type: f.type || 'text', class: 'mt-1 w-full rounded-lg border border-slate-300 p-2', required: !!f.required });
+        wrap.append(input);
+        respondentBox.append(wrap);
+      });
+
+      const itemsBox = el('div', { class: 'grid gap-4' });
+
+      let qCounter = 0;
+      SCHEMA.sections.forEach(section => {
+        const secCard = el('div', { class:'rounded-xl border border-slate-200 bg-white p-4' });
+        secCard.append(el('h3', { class:'text-lg font-semibold mb-2 text-slate-800' }, [section.title]));
+
+        section.items.forEach(q => {
+          qCounter++;
+          const card = el('div', { class: 'border border-slate-200 rounded-lg p-4 bg-slate-50 mb-3' });
+          card.dataset.qid = q.id;
+          if (q.showIf) card.dataset.showIf = JSON.stringify(q.showIf);
+
+          card.append(el('div', { class: 'text-sm font-semibold mb-2' }, [`${qCounter}. ${q.text}`]));
+
+          if (q.type === 'likert') {
+            const row = el('div', { class: 'flex flex-wrap gap-3' });
+            q.options.forEach((opt, i) => {
+              const id = `${q.id}_${i}`;
+              const lab = el('label', { class: 'inline-flex items-center gap-2' });
+              const radio = el('input', { type: 'radio', name: q.id, id, value: opt, required: !!q.required });
+              lab.append(radio, el('span', {}, [opt]));
+              row.append(lab);
+            });
+            card.append(row);
+
+          } else if (q.type === 'yesno') {
+            const row = el('div', { class: 'flex flex-wrap gap-4' });
+            (q.options || ['No','Yes']).forEach((opt, i) => {
+              const id = `${q.id}_${i}`;
+              const lab = el('label', { class: 'inline-flex items-center gap-2' });
+              const radio = el('input', { type: 'radio', name: q.id, id, value: opt, required: !!q.required });
+              lab.append(radio, el('span', {}, [opt]));
+              row.append(lab);
+            });
+            card.append(row);
+
+          } else if (q.type === 'number_or_unknown') {
+            const row = el('div', { class: 'flex items-center gap-3' });
+            const inp = el('input', { id:q.id, type:'number', min:q.min ?? 0, max:q.max ?? 120, class:'w-28 rounded-lg border border-slate-300 p-2' });
+            const chkId = `${q.id}_unknown`;
+            const chkLab = el('label', { class:'inline-flex items-center gap-2' });
+            const chk = el('input', { type:'checkbox', id:chkId });
+            chkLab.append(chk, el('span', {}, ["I don't know"]));
+            chk.addEventListener('change', () => { inp.disabled = chk.checked; if (chk.checked) inp.value = ''; });
+            row.append(el('span', { class:'text-sm text-slate-700' }, ['Age:']), inp, chkLab);
+            card.append(row);
+
+          } else if (q.type === 'multicheck') {
+            const col = el('div', { class: 'grid md:grid-cols-2 gap-2' });
+            (q.options || []).forEach((opt, i) => {
+              const id = `${q.id}_${i}`;
+              const lab = el('label', { class: 'inline-flex items-center gap-2' });
+              const cb = el('input', { type: 'checkbox', id, value: opt, 'data-group': q.id });
+              lab.append(cb, el('span', {}, [opt]));
+              col.append(lab);
+            });
+            card.append(col);
+
+          } else if (q.type === 'textarea') {
+            const ta = el('textarea', { id: q.id, rows: 4, class: 'mt-1 w-full rounded-lg border border-slate-300 p-2', required: !!q.required });
+            card.append(ta);
+
+          } else if (q.type === 'text') {
+            const inp = el('input', { id: q.id, type: 'text', class: 'mt-1 w-full rounded-lg border border-slate-300 p-2', required: !!q.required });
+            card.append(inp);
+          }
+
+          secCard.append(card);
+        });
+
+        itemsBox.append(secCard);
+      });
+
+      formEl.append(title, intro, respondentBox, itemsBox);
+
+      // initial conditional visibility
+      applyVisibility();
+    }
+
+    render();
+
+    // Conditional visibility helpers
+    function currentValue(id) {
+      const radios = document.querySelectorAll(`input[name="${id}"]`);
+      if (radios.length) {
+        const r = document.querySelector(`input[name="${id}"]:checked`);
+        return r ? r.value : '';
+      }
+      const eln = document.getElementById(id);
+      if (eln) return eln.value ?? '';
+      return '';
+    }
+
+    function applyVisibility() {
+      document.querySelectorAll('[data-show-if]').forEach(card => {
+        try {
+          const cond = JSON.parse(card.dataset.showIf);
+          const v = currentValue(cond.id);
+          const visible = ('eq' in cond) ? (v === cond.eq) : true;
+          card.style.display = visible ? '' : 'none';
+
+          // optional: clear hidden inputs
+          if (!visible) {
+            card.querySelectorAll('input[type="radio"]:checked').forEach(r => r.checked = false);
+            card.querySelectorAll('input[type="checkbox"]:checked').forEach(c => c.checked = false);
+            card.querySelectorAll('input[type="number"], input[type="text"], textarea').forEach(t => t.value = '');
+          }
+        } catch(e) {}
+      });
+    }
+
+    // Reapply visibility on any change
+    formEl.addEventListener('change', applyVisibility);
+
+    // ---------------------------
+    // 3) Collect answers
+    // ---------------------------
+    function collect() {
+      const answers = { meta: {}, sections: [], items: [] };
+      SCHEMA.respondentFields.forEach(f => {
+        const elx = document.getElementById(f.id);
+        answers.meta[f.id] = elx ? elx.value : '';
+      });
+
+      let idx = 0;
+      SCHEMA.sections.forEach(sec => {
+        const secOut = { title: sec.title, skipOfficeNote: !!sec.skipOfficeNote, items: [] };
+        sec.items.forEach(q => {
+          // skip if hidden by condition
+          const card = document.querySelector(`[data-qid="${q.id}"]`);
+          if (card && card.dataset.showIf && card.style.display === 'none') return;
+
+          idx++;
+          let value = '';
+          if (q.type === 'likert') {
+            const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+            value = checked ? checked.value : '';
+          } else if (q.type === 'yesno') {
+            const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+            value = checked ? checked.value : '';
+          } else if (q.type === 'number_or_unknown') {
+            const unknown = document.getElementById(`${q.id}_unknown`);
+            if (unknown && unknown.checked) {
+              value = "I don't know";
+            } else {
+              const elx = document.getElementById(q.id);
+              value = elx && elx.value !== '' ? `${elx.value} years old` : '';
+            }
+          } else if (q.type === 'multicheck') {
+            const boxes = Array.from(document.querySelectorAll(`input[type="checkbox"][data-group="${q.id}"]:checked`));
+            value = boxes.map(b => b.value).join('; ');
+          } else {
+            const elx = document.getElementById(q.id);
+            value = elx ? elx.value : '';
+          }
+
+          const rec = { index: idx, id: q.id, text: q.text, value, type: q.type };
+          answers.items.push(rec);
+          secOut.items.push(rec);
+        });
+        answers.sections.push(secOut);
+      });
+
+      answers.title = SCHEMA.title;
+      answers.timestamp = new Date().toISOString();
+      return answers;
+    }
+
+    // ---------------------------
+    // 4) Download helpers (+ scoring)
+    // ---------------------------
+    function fileBase() {
+      const who = (document.getElementById('r_name')?.value || 'respondent').replace(/[^a-z0-9-_]+/gi, '_');
+      const ts = new Date().toISOString().replace(/[:.]/g,'-');
+      return `${who}_questionnaire_${ts}`;
+    }
+
+    // Map likert to numeric score
+    function scoreLikert(val) {
+      const v = String(val || '').toLowerCase();
+      if (v.startsWith('never')) return 1;        // Never/Rarely
+      if (v.startsWith('sometimes')) return 2;
+      if (v.startsWith('often') && v !== 'very often') return 3;
+      if (v.startsWith('very')) return 4;         // Very Often
+      return ''; // not answered / N/A
+    }
+
+    const ascii = s => String(s ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '');
+
+    function toTxt(a) {
+      const lines = [];
+      lines.push(`# ${a.title}`);
+      lines.push(`Submitted: ${a.timestamp}`);
+      lines.push('');
+      lines.push(`Respondent: ${a.meta.r_name || ''}`);
+      lines.push(`Relationship: ${a.meta.r_relationship || ''}`);
+      if (a.meta.r_email) lines.push(`Email: ${a.meta.r_email}`);
+      lines.push('');
+
+      let pos = 0;
+      a.sections.forEach(sec => {
+        lines.push(`## ${sec.title}`);
+        sec.items.forEach(it => {
+          pos++;
+          const score = (pos <= 27 && it.type === 'likert') ? scoreLikert(it.value) : '';
+          const scoreNote = (score !== '' ? ` (score: ${score})` : '');
+          lines.push(`${it.index}. ${it.text}\n   -> ${it.value || '(no answer)'}${scoreNote}\n`);
+        });
+
+        if (!sec.skipOfficeNote) {
+          lines.push(`--- In-office use only ---`);
+          lines.push(`Total Score for the section: ______`);
+          lines.push(`Symptom Count: ______`);
+        }
+        // extra spacing before next section
+        lines.push('');
+        lines.push('');
+      });
+      return lines.join('\n');
+    }
+
+    function toCsv(a) {
+      const esc = s => '"' + String(s).replace(/"/g,'""') + '"';
+      const rows = [['section','index','id','question','answer','score']];
+      let pos = 0;
+      a.sections.forEach(sec => {
+        sec.items.forEach(it => {
+          pos++;
+          const score = (pos <= 27 && it.type === 'likert') ? scoreLikert(it.value) : '';
+          rows.push([sec.title, it.index, it.id, it.text, it.value || '', score]);
+        });
+        if (!sec.skipOfficeNote) {
+          rows.push([`${sec.title} – In-office only`, '', '', 'Total Score for the section', '______', '']);
+          rows.push([`${sec.title} – In-office only`, '', '', 'Symptom Count', '______', '']);
+        }
+        // blank spacer row between sections
+        rows.push(['', '', '', '', '', '']);
+      });
+      return rows.map(r => r.map(esc).join(',')).join('\n');
+    }
+
+    async function toPdf(a) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const margin = 48;
+      const pageH = doc.internal.pageSize.getHeight();
+      const width = doc.internal.pageSize.getWidth() - margin * 2;
+      let y = margin;
+
+      const ensure = () => { if (y > pageH - margin) { doc.addPage(); y = margin; } };
+
+      // Title
+      doc.setFont('helvetica','bold'); 
+      doc.setFontSize(16);
+      doc.text(ascii(a.title), margin, y); 
+      y += 20;
+
+      // Meta
+      doc.setFont('helvetica','normal'); 
+      doc.setFontSize(10);
+      doc.text(`Submitted: ${new Date(a.timestamp).toLocaleString()}`, margin, y); 
+      y += 12;
+      const meta = [
+        `Respondent: ${ascii(a.meta.r_name || '')}`,
+        `Relationship: ${ascii(a.meta.r_relationship || '')}`,
+        a.meta.r_email ? `Email: ${ascii(a.meta.r_email)}` : null
+      ].filter(Boolean);
+      meta.forEach(line => { ensure(); doc.text(line, margin, y); y += 12; });
+      y += 6;
+
+      // Sections & items
+      let globalIndex = 0;
+      a.sections.forEach(sec => {
+        doc.setFont('helvetica','bold'); 
+        doc.setFontSize(12);
+        ensure(); 
+        doc.text(ascii(sec.title), margin, y); 
+        y += 14;
+
+        doc.setFont('helvetica','normal'); 
+        doc.setFontSize(10);
+        sec.items.forEach(it => {
+          globalIndex++;
+          const qLines = doc.splitTextToSize(`${globalIndex}. ${ascii(it.text)}`, width);
+          qLines.forEach(line => { ensure(); doc.text(line, margin, y); y += 12; });
+
+          const score = (globalIndex <= 27 && it.type === 'likert') ? scoreLikert(it.value) : '';
+          const ans = ascii(it.value || '(no answer)');
+          const scoreNote = (score !== '' ? ` (score: ${score})` : '');
+          ensure(); 
+          doc.text('-> ' + ans + scoreNote, margin + 12, y); 
+          y += 14;
+        });
+
+        if (!sec.skipOfficeNote) {
+          y += 6; ensure();
+          doc.setFont('helvetica','bold'); doc.text('In-office use only', margin, y); y += 12;
+          doc.setFont('helvetica','normal');
+          doc.text('Total Score for the section: ______', margin, y); y += 12;
+          doc.text('Symptom Count: ______', margin, y); y += 6;
+        }
+        // extra spacing before next section
+        y += 14; ensure();
+      });
+
+      return doc;
+    }
+
+    function needLibsOk() {
+      if (!window.jspdf || !window.jspdf.jsPDF) { alert("PDF library failed to load. Check your internet connection and reload."); return false; }
+      if (typeof saveAs !== 'function') { alert("Download library failed to load. Check your internet connection and reload."); return false; }
+      return true;
+    }
+
+    // ---------------------------
+    // 5) Button handlers
+    // ---------------------------
+    document.getElementById('downloadTxt').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!needLibsOk()) return;
+      const a = collect();
+      const blob = new Blob([toTxt(a)], { type: 'text/plain;charset=utf-8' });
+      saveAs(blob, fileBase() + '.txt');
+    });
+
+    document.getElementById('downloadCsv').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!needLibsOk()) return;
+      const a = collect();
+      const blob = new Blob([toCsv(a)], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, fileBase() + '.csv');
+    });
+
+    document.getElementById('downloadPdf').addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!needLibsOk()) return;
+      const a = collect();
+      const pdf = await toPdf(a);
+      pdf.save(fileBase() + '.pdf');
+    });
+
+    document.getElementById('composeEmail').addEventListener('click', (e) => {
+      e.preventDefault();
+      const to = document.getElementById('recipientEmail').value || '';
+      const name = document.getElementById('recipientName').value || 'Clinician';
+      const subject = encodeURIComponent(`${name}: Questionnaire submission`);
+      const body = encodeURIComponent(`Hello ${name},\n\nI've completed the questionnaire. The PDF/TXT/CSV file is attached.\n\nThank you.`);
+      window.location.href = `mailto:${encodeURIComponent(to)}?subject=${subject}&body=${body}`;
+    });
+
+    document.getElementById('resetForm').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Clear all answers?')) render();
+    });
+  </script>
+</body>
+</html>
